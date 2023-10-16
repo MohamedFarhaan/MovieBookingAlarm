@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MovieBookingAlarm</string>
+    <string name="title_activity_movie_reminder">MovieReminder</string>
+</resources>
