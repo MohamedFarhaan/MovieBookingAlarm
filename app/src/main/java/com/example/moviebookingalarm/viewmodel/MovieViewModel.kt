@@ -98,6 +98,9 @@ class MovieViewModel @Inject constructor(val context: Context,
 
     fun openBatteryOptimizationSettings() {
         val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+//        val uri: Uri = Uri.fromParts("package", context.packageName, null)
+//        intent.data = uri
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
     }
 }

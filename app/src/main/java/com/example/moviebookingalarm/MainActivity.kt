@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -135,7 +136,7 @@ fun App(movieModel: MovieViewModel) {
                     movieModel.updateMovieNameL(it)
                 },
                 label = { Text(text = "Movie Name") })
-            OutlinedTextField(value = cityName ?: "",
+            OutlinedTextField(value = (cityName ?: "").trim().capitalize(),
                 readOnly = true,
                 onValueChange = {
                     movieModel.updateCityL(it.trim().lowercase())
@@ -149,9 +150,9 @@ fun App(movieModel: MovieViewModel) {
                     expanded = cityDropDownExpanded,
                     onDismissRequest = { cityDropDownExpanded = false }
                 ) {
-                    INOX_CITY.values.forEach { item ->
+                    INOX_CITY.values.sortedBy({it}).forEach { item ->
                         DropdownMenuItem(
-                            text = { Text(text = item.trim().lowercase()) },
+                            text = { Text(text = item.trim().capitalize()) },
                             onClick = {
                                 movieModel.updateCityL(item.trim().lowercase())
                                 cityDropDownExpanded = false
