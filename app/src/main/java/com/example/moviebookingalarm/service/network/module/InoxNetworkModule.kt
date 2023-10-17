@@ -1,49 +1,31 @@
-package com.example.moviebookingalarm.service
+package com.example.moviebookingalarm.service.network.module
 
-import com.google.gson.Gson
+import com.example.moviebookingalarm.service.network.InoxService
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.create
-import retrofit2.http.POST
-import retrofit2.http.Query
 import java.io.IOException
-import retrofit2.converter.scalars.ScalarsConverterFactory;
+import javax.inject.Singleton
 
-interface InoxService {
-
-    @POST("TestQuickBookingHandler.ashx")
-    suspend fun getMoviesList(@Query("GetMovieList") GetMovieList:String = "True",
-                              @Query("CinemaID") CinemaID: Int = 0): retrofit2.Response<String>;
-
-    @POST("ScheduleCinemaHandler_Cache.ashx")
-    suspend fun getScheduledMoviesList(
-        @Query("ShowDate") ShowDate: String,
-        @Query("CityID") CityID: Int,
-        @Query("Showday") Showday:String = "True",
-        @Query("PageIndex") PageIndex: Int = 1): retrofit2.Response<String>;
-
-    companion object {
-        var inoxService: InoxService? = null;
-
-
-        fun getInoxServiceInstance(): InoxService {
-            if(inoxService == null) {
-                val inst = Retrofit.Builder()
-                    .baseUrl("https://www.inoxmovies.com/Handlers/")
-//                    .addConverterFactory(GsonConverterFactory.create(Gson().newBuilder().setLenient().create()))
-                    .addConverterFactory(ScalarsConverterFactory.create())
-                    .client(OkHttpClient.Builder().addInterceptor(HeaderInterceptor()).build())
-                    .build().create<InoxService>()
-                inoxService = inst;
-                return inst;
-            } else {
-                return inoxService!!;
-            }
-        }
+@Module
+@InstallIn(SingletonComponent::class)
+object InoxNetworkModule {
+    @Singleton
+    @Provides
+    fun provideRetrofitService(): InoxService {
+        return Retrofit.Builder()
+            .baseUrl("https://www.inoxmovies.com/Handlers/")
+            .addConverterFactory(ScalarsConverterFactory.create())
+            .client(OkHttpClient.Builder().addInterceptor(HeaderInterceptor()).build())
+            .build().create<InoxService>()
     }
 }
 

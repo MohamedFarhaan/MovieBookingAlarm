@@ -1,30 +1,24 @@
 package com.example.moviebookingalarm
 
 import android.Manifest
-import android.app.AlarmManager
 import android.app.DatePickerDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.pm.PackageManager
-import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.DatePicker
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.rounded.LocationOn
@@ -38,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -49,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
@@ -57,14 +49,17 @@ import androidx.core.content.ContextCompat
 import com.example.moviebookingalarm.constants.INOX_CITY
 import com.example.moviebookingalarm.ui.theme.MovieBookingAlarmTheme
 import com.example.moviebookingalarm.viewmodel.MovieViewModel
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.Calendar
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val movieModel: MovieViewModel = MovieViewModel(applicationContext, alarmManager);
+        val movieModel: MovieViewModel by viewModels()
+
+
+        //Checking and obtaining permissions
         if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC), 0)
         }
@@ -74,6 +69,9 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 0)
         }
+
+
+        //Create Notification Channel
         var notificationManager: NotificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -107,6 +105,13 @@ fun App(movieModel: MovieViewModel) {
             _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
         movieModel.updateShowDateL("${String.format("%0" + 2 + "d", (mMonth+1).toInt())}/${String.format("%0" + 2 + "d", mDayOfMonth.toInt())}/$mYear")
     }, Calendar.getInstance().get(Calendar.YEAR), Calendar.getInstance().get(Calendar.MONDAY), Calendar.getInstance().get(Calendar.DAY_OF_MONTH));
+
+    //Block battery optimzation
+    if(movieModel.isBatteryOptimizationEnabled()) {
+        Toast.makeText(movieModel.context, "Allow Battery optimization to " +
+                "be unrestricted for background service", Toast.LENGTH_SHORT).show()
+        movieModel.openBatteryOptimizationSettings();
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -178,13 +183,7 @@ fun App(movieModel: MovieViewModel) {
                     movieModel.updateCityL("");
                     movieModel.updateShowDateL("");
                     movieModel.updateLocationL("");
-//                    throw RuntimeException("Killing the app to stop notification")
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    val packageName = movieModel.context.packageName
-                    val uri = Uri.fromParts("package", packageName, null)
-                    intent.data = uri
-                    intent.setFlags(FLAG_ACTIVITY_NEW_TASK)
-                    movieModel.context.startActivity(intent)
+                    movieModel.ringtone.stop();
                 }) {
                     Text(text = "Reset")
                 }

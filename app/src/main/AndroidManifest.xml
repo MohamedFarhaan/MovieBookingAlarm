@@ -12,6 +12,7 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -21,11 +22,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MovieBookingAlarm"
         tools:targetApi="31">
-        <activity
-            android:name=".MovieReminder"
-            android:exported="false"
-            android:label="@string/title_activity_movie_reminder"
-            android:theme="@style/Theme.MovieBookingAlarm" />
 
         <activity
             android:name=".MainActivity"

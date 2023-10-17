@@ -1,30 +1,29 @@
 package com.example.moviebookingalarm.viewmodel
 
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.media.RingtoneManager
-import android.os.Build
-import androidx.compose.ui.platform.LocalContext
+import android.media.Ringtone
+import android.net.Uri
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.moviebookingalarm.db.DatabaseInit
+import com.example.moviebookingalarm.db.dao.MovieDao
 import com.example.moviebookingalarm.db.entity.AlarmItem
 import com.example.moviebookingalarm.db.entity.Movie
-import com.example.moviebookingalarm.service.InoxService
 import com.example.moviebookingalarm.service.alarm.AlarmSchedulerImpl
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MovieViewModel(val context: Context, val alarmManager: AlarmManager): ViewModel() {
+@HiltViewModel
+class MovieViewModel @Inject constructor(val context: Context,
+    val movieDao: MovieDao, val ringtone: Ringtone): ViewModel() {
 
-    lateinit var db: DatabaseInit;
-    lateinit var inoxService: InoxService;
     private var _movie = MutableStateFlow<Movie>(Movie(id = 0, movieName = null, city = "", showDate = ""))
     var movie: StateFlow<Movie> = _movie
     private var _movieNameL = MutableLiveData<String>("")
@@ -36,16 +35,9 @@ class MovieViewModel(val context: Context, val alarmManager: AlarmManager): View
     private var _locationL = MutableLiveData<String>("")
     var locationL: LiveData<String> = _locationL
     var alarmItem: AlarmItem = AlarmItem(time = "123", message = "Heelow")
-//    val serviceIntent = Intent(context, ApiService::class.java)
-//    val intervalMillis = 10 * 1000 // 10 seconds
-//    val triggerAtMillis = System.currentTimeMillis() + intervalMillis
-//    val intent = Intent(context, AlarmReceiver::class.java)
-//    val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
     init {
         viewModelScope.launch {
-            db = DatabaseInit.getDatabase(context = context);
-            inoxService = InoxService.getInoxServiceInstance();
             populateMovie()
         }
     }
@@ -54,7 +46,7 @@ class MovieViewModel(val context: Context, val alarmManager: AlarmManager): View
 
     fun populateMovie() {
         viewModelScope.launch {
-            val movie = db.movieDao().getMovie();
+            val movie = movieDao.getMovie();
             if (movie != null) {
                 _movie.value = movie
                 _movieNameL.value = movie.movieName ?: ""
@@ -68,19 +60,17 @@ class MovieViewModel(val context: Context, val alarmManager: AlarmManager): View
     fun updateMovie(movieName: String, cit: String, showDat: String, loc: String? = "inox") {
         val movie = Movie(id = 0, movieName = movieName, city = cit, showDate = showDat, location = loc ?: "inox")
         viewModelScope.launch {
-            db.movieDao().deleteAllMovies()
-            db.movieDao().insertMovie(movie)
+            movieDao.deleteAllMovies()
+            movieDao.insertMovie(movie)
             populateMovie()
-//            context.startService(serviceIntent)
             alarmItem?.let (AlarmSchedulerImpl(context)::schedule)
         }
     }
 
     fun resetMovie() {
         viewModelScope.launch {
-            db.movieDao().deleteAllMovies()
+            movieDao.deleteAllMovies()
             populateMovie()
-//            context.stopService(serviceIntent)
             alarmItem?.let (AlarmSchedulerImpl(context)::cancel)
         }
     }
@@ -99,5 +89,15 @@ class MovieViewModel(val context: Context, val alarmManager: AlarmManager): View
 
     fun updateLocationL(loc: String) {
         _locationL.value = loc
+    }
+
+    fun isBatteryOptimizationEnabled(): Boolean {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        return !powerManager.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    fun openBatteryOptimizationSettings() {
+        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+        context.startActivity(intent)
     }
 }
