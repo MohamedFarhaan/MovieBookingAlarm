@@ -13,6 +13,12 @@ data class Movie(
     @ColumnInfo(name = "MOVIE_NAME")
     val movieName: String?,
 
+    @ColumnInfo(name = "CITY")
+    val city: String,
+
+    @ColumnInfo(name = "SHOW_DATE")
+    val showDate: String,
+
     @ColumnInfo(name = "LOCATION")
     val location: String = "inox"
 )

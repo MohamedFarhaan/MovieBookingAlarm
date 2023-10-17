@@ -22,7 +22,7 @@ abstract class DatabaseInit : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     DatabaseInit::class.java,
-                    "movie_book_alarm_v1.db"
+                    "movie_book_alarm_v2.db"
                 ).build()
 
                 INSTANCE = instance

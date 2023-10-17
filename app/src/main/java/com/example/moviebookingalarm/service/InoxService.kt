@@ -19,6 +19,13 @@ interface InoxService {
     suspend fun getMoviesList(@Query("GetMovieList") GetMovieList:String = "True",
                               @Query("CinemaID") CinemaID: Int = 0): retrofit2.Response<String>;
 
+    @POST("ScheduleCinemaHandler_Cache.ashx")
+    suspend fun getScheduledMoviesList(
+        @Query("ShowDate") ShowDate: String,
+        @Query("CityID") CityID: Int,
+        @Query("Showday") Showday:String = "True",
+        @Query("PageIndex") PageIndex: Int = 1): retrofit2.Response<String>;
+
     companion object {
         var inoxService: InoxService? = null;
 
